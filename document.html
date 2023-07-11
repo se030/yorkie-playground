@@ -1,0 +1,68 @@
+<html>
+  <head>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/yorkie-js-sdk/0.4.4/yorkie-js-sdk.js"
+      integrity="sha512-u/7IGc7HXSO7tMCqHeBqrahg8Xzp0A3HOc+wAbNPhjfaizD5koLb0pF5ExpuYn6nbt6f7fe6AdCkLebSnBcrQw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/rangy/1.3.1/rangy-core.min.js"
+      integrity="sha512-ZCkgV0SdoJJvBjlkwMpNZFSQzDWtB2ftYwOJQqwQUaXjfVLeUrxIfPMCxSaxVCXfFL82ccmjn6TTbkXjL3w2pA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/rangy/1.3.1/rangy-serializer.min.js"
+      integrity="sha512-UiMH5iF3E7RbnDaoZjPN5b7Ndo+SlbN6VtJsnSCfn05kz5pjKvQTjkoW5I26DUVS5H27extTiwrSdrDBqdgobQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+  </head>
+  <body>
+    <h1>Editor</h1>
+    <div id="editor" contenteditable="true"></div>
+    <script>
+      async function main() {
+        const client = new yorkie.Client('https://api.yorkie.dev', {
+          apiKey: '',
+        });
+        await client.activate();
+
+        const doc = new yorkie.Document('editor-document');
+        await client.attach(doc);
+
+        const editor = document.querySelector('#editor');
+        rangy.init();
+
+        // initialization
+        doc.update((root) => {
+          if (root.text) {
+            editor.innerHTML = root.text;
+          } else {
+            root.text = 'Edit me.';
+          }
+        });
+
+        editor.addEventListener('input', (event) => {
+          doc.update((root) => {
+            root.text = editor.innerHTML;
+          });
+        });
+
+        doc.subscribe((event) => {
+          if (event.type === 'remote-change') {
+            const selection = rangy.serializeSelection(editor, true);
+            editor.innerHTML = doc.getRoot().text;
+
+            try {
+              rangy.deserializeSelection(selection);
+            } catch {}
+          }
+        });
+      }
+
+      main();
+    </script>
+  </body>
+</html>
